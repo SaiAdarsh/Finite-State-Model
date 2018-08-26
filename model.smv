@@ -1,0 +1,157 @@
+MODULE main
+VAR
+ ns_signal: {RED, YELLOW, GREEN};
+ ew_signal: {RED, YELLOW, GREEN};
+ ns_sensor: boolean;
+ ew_sensor: boolean;
+ time: 0..10;
+ ns_ped_light: {WAIT, WALK, FLASH};
+ ew_ped_light: {WAIT, WALK, FLASH};
+ ns_button: {RESET, SET};
+ ew_button: {RESET, SET};
+ emergency_vehicle_ns: boolean;
+ emergency_vehicle_ew: boolean;
+ 
+ASSIGN
+--init(ns_sensor) := RESET;
+--next(ns_sensor):= {TRUE,FALSE};
+
+--init(ew_sensor) := RESET;
+--next(ew_sensor):= {FALSE,TRUE};
+
+-- The counter for time. If time is not zero, the time is subtracted by one. 
+init(time) := 10;
+ next(time) :=
+    case
+        (time > 0) : time - 1;
+        (time = 0 & ns_signal = RED) : 10;
+        (time = 0 & ns_signal = YELLOW) : 10;
+        (time = 0 & ns_signal = GREEN) : 3;
+		(time = 0 & ew_signal = RED) : 10;
+        (time = 0 & ew_signal = YELLOW) : 10;
+        (time = 0 & ew_signal = GREEN) : 3;
+		-- default, the value remains the same
+        TRUE : time;
+    esac;
+
+-- The push button for pedestrian path of NS.
+init(ns_button) := RESET;
+ next(ns_button) := case
+ ns_button=SET & ns_ped_light=WALK: RESET;
+ ns_button=SET: SET;
+ ns_button=RESET & ns_signal=GREEN:{RESET,SET};
+ ns_button=RESET: RESET;
+ -- default
+ TRUE: {RESET};
+ esac;
+
+-- The push button for pedestrian path of EW. 
+init(ew_button) := RESET;
+ next(ew_button) := case
+ ew_button=SET & ew_ped_light=WALK: RESET;
+ ew_button=SET: SET;
+ ew_button=RESET & ew_signal=GREEN:
+ {RESET,SET};
+ ew_button=RESET: RESET;
+ TRUE: {RESET};
+ esac;
+
+-- The traffic signal for North South lane
+init(ns_signal) := case
+                       ew_signal=RED: GREEN;
+					   ew_signal=YELLOW: RED;
+					   ew_signal=GREEN: RED;
+                      esac;
+  next(ns_signal) := case
+						--ns_sensor=TRUE:GREEN;
+						--ew_sensor=TRUE:RED;
+                        -- ns_signal is yeallow now, so it will be red in the next step
+                        ns_signal = YELLOW & time=0 : RED;
+
+                        -- ns_signal is green without cars AND there are cars in light1
+                        ns_signal = GREEN  & ew_signal = RED & time=0 & ns_sensor = FALSE & ew_sensor = TRUE : YELLOW;
+
+                        -- ew_signal is yeallow now (it will be red in the next step), thus ns_signal can change to green in the next iteration
+						ew_signal = YELLOW & time=0  : GREEN;
+
+                        -- default
+                        TRUE: ns_signal;
+                      esac;
+-- The traffic signal for East West lane
+next(ew_signal) := case
+						--ns_sensor=TRUE:RED;
+						--ew_sensor=TRUE:GREEN;
+                        -- ew_signal is yellow now, so it will be red in the next step
+                        ew_signal = YELLOW & time=0  : RED;
+
+                        -- ew_signal is green without cars AND there are cars in ns_signal
+                        ew_signal = GREEN  & ns_signal = RED & time=0 & ns_sensor = TRUE & ew_sensor = FALSE : YELLOW;
+
+                        -- ns_signal is yellow now (it will be red in the next step), thus ew_signal can change to green in the next iteration
+						ns_signal = YELLOW & time=0 : GREEN;
+
+                        -- default
+                        TRUE: ew_signal;
+                      esac;
+
+-- The pedestrian light for North South lane
+init(ns_ped_light) := WAIT;
+ next(ns_ped_light) := case
+ ns_ped_light=WAIT & ns_signal=YELLOW & ns_button = SET & time=0: WALK;
+ ns_ped_light=WAIT & ns_signal=YELLOW & ns_button = RESET & time=0: WAIT;
+ ns_ped_light=WAIT & ns_signal=GREEN & ns_button = RESET & time=0: WAIT;
+ ns_ped_light=WAIT & ns_signal=RED & ns_button = RESET & time=0: WAIT;
+ ns_ped_light=WALK & ns_signal=RED & ns_button = RESET & time=0: WAIT;
+ ns_ped_light=WALK & ns_signal=YELLOW & ns_button = SET  & time=0: WALK;
+ ns_ped_light=WALK & ns_signal=GREEN & ns_button = RESET & time=0: WAIT;
+
+ -- default
+ TRUE: {WAIT};
+ esac;
+
+-- The pedestrian light for East West lane 
+init(ew_ped_light) := WAIT;
+ next(ew_ped_light) := case
+ ew_ped_light=WAIT & ew_signal=YELLOW & ew_button = SET & time=0: WALK;
+ ew_ped_light=WAIT & ew_signal=YELLOW & ew_button = RESET & time=0: WAIT;
+ ew_ped_light=WAIT & ew_signal=GREEN & ew_button = RESET & time=0: WAIT;
+ ew_ped_light=WAIT & ew_signal=RED & ew_button = RESET & time=0: WAIT;
+ ew_ped_light=WALK & ew_signal=RED & ew_button = RESET & time=0: WAIT;
+ ew_ped_light=WALK & ew_signal=YELLOW & ew_button = SET & time=0: WALK;
+ ew_ped_light=WALK & ew_signal=GREEN & ew_button = RESET & time=0: WAIT;
+
+ -- default
+ TRUE: {WAIT};
+ esac; 
+
+ 
+
+SPEC AG (ns_signal = RED & ns_button = RESET -> AF (ns_signal != GREEN)) 
+SPEC AG !(ns_signal = GREEN & ew_signal = GREEN)
+SPEC AG !(ns_signal = RED & ew_signal = RED)
+SPEC AG !(ns_signal = YELLOW & ew_signal = GREEN)
+SPEC AG !(ns_signal = YELLOW & ew_signal = YELLOW)
+
+SPEC AG ((ns_signal = GREEN | ns_signal = YELLOW) -> ns_ped_light != WALK)
+SPEC AG ((ew_signal = GREEN | ew_signal = YELLOW) -> ew_ped_light != WALK) 
+SPEC AF (ew_ped_light = WALK -> ew_ped_light = WAIT)
+
+SPEC AF (ew_ped_light = WALK -> ew_signal = GREEN)
+SPEC AG ((ns_signal = GREEN | ns_signal = YELLOW) -> ns_ped_light = WALK)
+
+SPEC AG ((ns_signal = RED & ns_button = RESET) ->  ns_ped_light != WALK) 
+SPEC AG ((ns_signal = GREEN & ns_button = SET) ->  ns_ped_light = WAIT) 
+SPEC AF ((ew_signal = RED & ew_button = SET) -> AF ew_ped_light = WALK) 
+SPEC AF ((ew_signal = GREEN & ew_button = SET) -> AF ew_ped_light != WALK)
+SPEC AF ((ew_signal = YELLOW & ew_button = RESET) -> ew_ped_light = WALK)
+SPEC AG ((ew_button = RESET) -> ew_ped_light != WALK)
+
+SPEC AG (ns_ped_light = WALK -> ns_signal != GREEN)
+
+SPEC AG (ns_ped_light = WALK -> ns_signal != YELLOW)
+
+
+
+
+
+
