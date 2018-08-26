@@ -1,0 +1,11 @@
+In this model, we divide the signals into two sets: North-South and East-West,
+for easy execution and simplicity. Therefore we assume that same signal
+persists for both the directions in each set. For instance if North has RED then
+implicitly South also has RED. Likewise the same applies for East-West.
+2. The sensors is a boolean variable: only takes TRUE or FALSE. For simplicity
+we make North-South direction sensors as one sensor: ns_sensor and EastWest direction sensors as ew_sensor.3. We also assume that the duration for red and green is 10 seconds while the
+duration for yellow is 3 seconds.
+4. The variables ns_ped_light and ew_ped_light only takes anyone of the
+values: {WAIT, WALK}
+5. The emergency vehicles does not come from both the directions at the same
+time. Only one emergency sensor might be TRUE at any given time.
