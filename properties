@@ -1,0 +1,21 @@
+The following are the safety properties.
+(i) SPEC AG (ns_ped_light = WALK -> ns_signal != GREEN)
+The pedestrian light cannot indicate that I should walk when the traffic light is
+green.This is a safety property as we are saying that something should NEVER
+happen.
+(ii) SPEC AG !(ns_signal = GREEN & ew_signal = GREEN)
+Both NS and WS signal lights cannot be true at GREEN at same time.
+(iii) SPEC AG (ns_ped_light = WALK -> ns_signal != YELLOW)
+The pedestrian light cannot indicate that I should walk when the traffic light is
+yellow.This is a safety property as we are saying that something should NEVER
+happen.
+The following are the liveness properties.
+(i) LTLSPEC G (ns_signal = RED & ns_button = RESET -> F (ns_signal = GREEN))
+○ If theNS signal light is red, and the button is reset, then eventually, the NS signal
+light will turn green.
+○ This is a liveness property, as we assert that something will eventually happen.
+(ii) SPEC AF ((ew_signal = RED & ew_button = SET) -> AF ew_ped_light = WALK)
+If the EW signal light is red and the pedestrian button is SET, then eventually the EW
+pedestrian signal light changes to WALK.
+(iii) SPEC AF (ew_ped_light = WALK -> ew_ped_light = WAIT)
+If the EW pedestrian signal is WALK eventually it changes to WAIT.
