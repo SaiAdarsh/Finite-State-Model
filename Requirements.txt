@@ -1,0 +1,10 @@
+1. If pedestrian light is red it would turn to green eventually ,so that no
+pedestrian has to wait all the time.
+2. On the crossing side traffic light green will be on , the pedestrian light will be
+red on the opposite direction .
+3. If traffic light is green it implies it would eventually turn to yellow
+4. If traffic light is red it will eventually turn to green
+5. Traffic light will never be green for both directions
+6. In case of emergency traffic light would turn to green then eventually yellow
+once vehicle has passed ,At this time pedestrian light will turn red so that we
+can allow the vehicle to pass the intersection .
