@@ -1,0 +1,6 @@
+1. Our model used as traffic controller to manage intersections of car-car and
+car-pedestrian, and car-pedestrian-emergency in two way directions.
+2. The signal in NS/EW directions can be one of the three colors {RED,
+YELLOW, GREEN} at anytime.
+3. The pedestrians can request to walk to other side of the road using the button.
+4. The traffic controller provides high priority in case of emergency vehicles.
